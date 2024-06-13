@@ -1,0 +1,200 @@
+---
+title: "Qatar Hospital Microbiome"
+author: "Kaseba Chibwe"
+date: "5/31/2024"
+output:
+  pdf_document:
+    latex_engine: xelatex
+---
+#Load Libraries
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+library(phyloseq)
+library(dada2)
+library(readxl)
+library(vegan)
+library(glmnet)
+library(tidyverse)
+library(pairwiseAdonis)
+library(ggpubr)
+library(gghalves)
+library(ggrepel)
+library(VennDiagram)
+library(RColorBrewer)
+library(khroma)
+library(decontam)
+library(coefplot)
+library(gt)
+library(caret)
+library(phytools)
+library(scales)
+library(circlize)
+library(ComplexHeatmap)
+library(cluster)
+library(pheatmap)
+library(factoextra)
+library(dendextend)
+library(RVAideMemoire)
+theme_set(theme_classic())
+
+knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 80), tidy = TRUE)
+```
+
+#Read QC
+```{r message=FALSE, warning=FALSE}
+#The following script is commented out because it takes a very long time and should be run from the folder in which the unfiltered fastq files are. The output is available in Data and loaded instead.
+# source("./R/Read Quality.R")
+load("./Data/qaDataAvg.RDATA")
+
+source("./R/Read Quality (Local Script).R", print.eval=TRUE)
+source("./R/Table Read Quality Formatting.R")
+tableQual
+source("./R/Table Denoise Stats Formatting.R")
+tableDenoiseAvg
+```
+
+#Phyloseq Prep
+```{r message=FALSE, warning=FALSE}
+source("./R/Load and Clean Data.R", print.eval=TRUE)
+
+source("./R/Remove Contaminants and Subset Data.R", print.eval=TRUE)
+```
+
+#Basic Data
+```{r message=FALSE, warning=FALSE}
+source("./R/Visualize Metadata.R", print.eval=TRUE)
+```
+
+```{r message=FALSE, warning=FALSE}
+source("./R/Table Sampling Formatting.R")
+tableSamp
+```
+
+
+#ASV Core
+```{r message=FALSE, warning=FALSE}
+source("./R/All Samples Genus, Family, Phylum Abundances.R", print.eval=TRUE)
+source("./R/Identify Core ASVs.R", print.eval=TRUE)
+```
+
+
+#Before/After Samples (NICU Patient Rooms)
+##Before vs. After Opening
+```{r message=FALSE, warning=FALSE}
+source("./R/Before-After Alpha Diversity.R", print.eval=TRUE)
+```
+
+```{r message=FALSE, warning=FALSE}
+source("./R/Before-After Beta Diversity.R", print.eval=TRUE)
+```
+
+
+#After Samples
+##Abundances
+```{r message=FALSE, warning=FALSE}
+source("./R/After Samples Genus, Family, Phylum Abundances.R", print.eval=TRUE)
+source("./R/Table After Abundance Formatting.R", print.eval=TRUE)
+tableAbund
+```
+
+
+##Area Type
+###Alpha Diversity
+```{r message=FALSE, warning=FALSE}
+source("./R/After Alpha Diversity.R", print.eval=TRUE)
+```
+###Beta Diverisity
+```{r message=FALSE, warning=FALSE}
+source("./R/After Beta Diversity.R", print.eval=TRUE)
+```
+
+####Supplementary - Beta Diversity
+```{r message=FALSE, warning=FALSE}
+source("./R/After Beta Diversity Supplementary.R", print.eval=TRUE)
+```
+
+
+```{r message=FALSE, warning=FALSE}
+source("./R/Table Alpha Diversity Formatting.R")
+tableAlpha
+tableAlphaSupp
+tableCor
+```
+
+```{r message=FALSE, warning=FALSE}
+source("./R/Table Beta Diversity Formatting.R")
+tableBeta
+tableBetaSupp
+```
+
+
+###ML
+```{r message=FALSE, warning=FALSE}
+#The following scripts are commented out because running models takes a very long time. The output is available in Data/ML and loaded instead.
+source("./R/ML Area Type - Prepare Predictor and Response Variables.R")
+# source("./R/ML Area Type - LASSO.R")
+# source("./R/ML Area Type - SVM.R")
+# source("./R/ML Area Type - RF.R")
+
+#Load models
+load("./Data/ML/lassoAreaType.RData")
+load("./Data/ML/lassoAreaTypeTest.RData")
+load("./Data/ML/lassoAreaTypeConfusionMatrix.RData")
+load("./Data/ML/lassoAreaTypeMCC.RData")
+
+load("./Data/ML/svmLinearAreaType.RData")
+load("./Data/ML/svmLinearAreaTypeTest.RData")
+load("./Data/ML/svmLinearAreaTypeConfusionMatrix.RData")
+load("./Data/ML/svmLinearAreaTypeMCC.RData")
+load("./Data/ML/svmLinearAreaTypeMCC.Area.RData")
+
+load("./Data/ML/svmRadialAreaType.RData")
+load("./Data/ML/svmRadialAreaTypeTest.RData")
+load("./Data/ML/svmRadialAreaTypeConfusionMatrix.RData")
+load("./Data/ML/svmRadialAreaTypeMCC.RData")
+load("./Data/ML/svmRadialAreaTypeMCC.Area.RData")
+
+load("./Data/ML/rfAreaType.RData")
+load("./Data/ML/rfAreaTypeTest.RData")
+load("./Data/ML/rfAreaTypeConfusionMatrix.RData")
+load("./Data/ML/rfAreaTypeMCC.RData" )
+load("./Data/ML/rfAreaTypeMCC.Area.RData")
+
+#Get results
+source("./R/ML Area Type - Results.R", print.eval=TRUE)
+source("./R/ML Area Type - Comparison.R", print.eval=TRUE)
+source("./R/ML Area Type - LASSO Figure.R", print.eval=TRUE)
+```
+
+```{r out.width = '100%'}
+error_file <- magick::image_read("./Data/Venn Diagram - ML Models ASV.png")
+right_png <- magick::image_convert(error_file, "png")
+magick::image_write(right_png, path = "./Data/Venn Diagram - ML Models ASV.png", format = "png")
+knitr::include_graphics("./Data/Venn Diagram - ML Models ASV.png", error = FALSE)
+```
+
+
+```{r message=FALSE, warning=FALSE}
+source("./R/Table ML Formatting.R")
+tableML
+tableMLSupp
+#tableLasso
+```
+
+
+#Culture Data
+```{r message=FALSE, warning=FALSE}
+source("./R/Culture Data Analysis.R", print.eval=TRUE)
+```
+
+##Comparison
+```{r message=FALSE, warning=FALSE}
+source("./R/Culture and 16S Correlations.R", print.eval=TRUE)
+```
+
+
+#Supplementary - Greengenes Analysis
+```{r message=FALSE, warning=FALSE}
+source("./R/Greengenes Taxa Analysis.R", print.eval=TRUE)
+source("./R/Table Greengenes Taxa Formatting.R")
+tableTaxagg
+```
